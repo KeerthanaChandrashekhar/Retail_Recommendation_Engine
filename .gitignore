@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
+
+# VS Code
+.vscode/
+
+model.pkl
+user_item_matrix.csv
+interactions.csv
+online_retail_II.xlsx
+
+other_data/
