@@ -1,8 +1,10 @@
+from flask_cors import CORS
 from flask import Flask, jsonify, request, send_from_directory
 import pickle
 from recommend import recommend_products
 
 app = Flask(__name__)
+CORS(app)
 
 # Load model
 with open("model.pkl", "rb") as f:

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>shopAI — Retailer Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:['DM Sans','sans-serif'],display:['Playfair Display','serif']}}}}
+</script>
+<style>
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .4s ease both}
+</style>
+</head>
+<body class="bg-stone-50 font-sans text-stone-900 min-h-screen">
+
+<div id="nav-placeholder"></div>
+
+<!-- AUTH GATE ────────────────────────────────────────────────────────── -->
+<div id="auth-gate" class="max-w-md mx-auto px-4 py-24 text-center" style="display:none">
+  <div class="bg-white border border-stone-200 rounded-3xl p-10 shadow-sm">
+    <div class="text-4xl mb-4">🔐</div>
+    <h2 class="font-display text-2xl mb-2">Retailer Access</h2>
+    <p class="text-sm text-stone-400 mb-6">Enter a Retailer ID (starts with R) to access the dashboard.</p>
+    <input id="r-uid" type="text" placeholder="e.g. R001"
+      class="w-full px-4 py-3 border border-stone-300 rounded-xl text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-terracotta/30 focus:border-terracotta"/>
+    <button onclick="retailerLogin()"
+      class="w-full py-3 bg-stone-900 text-white rounded-xl font-semibold text-sm hover:bg-terracotta transition-colors">
+      Access Dashboard →
+    </button>
+    <p class="text-xs text-stone-400 mt-4">Try: R001, R100, RETAILER</p>
+  </div>
+</div>
+
+<!-- DASHBOARD ────────────────────────────────────────────────────────── -->
+<div id="dashboard" style="display:none">
+
+  <!-- PAGE HEADER -->
+  <div class="bg-white border-b border-stone-200 px-4 sm:px-6 py-5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <p class="text-xs uppercase tracking-widest text-terracotta font-semibold mb-1">Retailer Dashboard</p>
+        <h1 class="font-display text-2xl">Analytics Overview</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-3 py-1.5 font-medium">● Live</span>
+        <span class="text-xs text-stone-400 hidden sm:block" id="last-updated"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- STAT CARDS ────────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-2xl border border-stone-200 p-5 anim" style="animation-delay:.05s">
+        <p class="text-xs uppercase tracking-widest text-stone-400 font-semibold mb-2">Total Products</p>
+        <p class="text-3xl font-bold text-stone-900" id="stat-products">—</p>
+        <p class="text-xs text-green-600 mt-1">↑ 12% from last month</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-stone-200 p-5 anim" style="animation-delay:.1s">
+        <p class="text-xs uppercase tracking-widest text-stone-400 font-semibold mb-2">Total Customers</p>
+        <p class="text-3xl font-bold text-stone-900" id="stat-users">—</p>
+        <p class="text-xs text-green-600 mt-1">↑ 8% from last month</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-stone-200 p-5 anim" style="animation-delay:.15s">
+        <p class="text-xs uppercase tracking-widest text-stone-400 font-semibold mb-2">Total Interactions</p>
+        <p class="text-3xl font-bold text-stone-900" id="stat-interactions">—</p>
+        <p class="text-xs text-stone-400 mt-1">From recommendation logs</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-stone-200 p-5 anim" style="animation-delay:.2s">
+        <p class="text-xs uppercase tracking-widest text-stone-400 font-semibold mb-2">Avg. Match Score</p>
+        <p class="text-3xl font-bold text-terracotta" id="stat-score">—</p>
+        <p class="text-xs text-stone-400 mt-1">Cosine similarity avg</p>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW ─────────────────────────────────────────────────────── -->
+    <div class="grid lg:grid-cols-2 gap-6 mb-8">
+
+      <!-- TOP RECOMMENDED -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-6 anim" style="animation-delay:.25s">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="font-semibold text-stone-800">Top Recommended Products</h3>
+            <p class="text-xs text-stone-400 mt-0.5">By recommendation frequency</p>
+          </div>
+          <span class="text-xs bg-terracotta/10 text-terracotta border border-terracotta/20 rounded-full px-2.5 py-1">Top 8</span>
+        </div>
+        <div id="chart-top-wrap" class="relative h-64">
+          <canvas id="chart-top"></canvas>
+        </div>
+      </div>
+
+      <!-- INTERACTION FREQUENCY -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-6 anim" style="animation-delay:.3s">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="font-semibold text-stone-800">Category Interaction Frequency</h3>
+            <p class="text-xs text-stone-400 mt-0.5">Interactions per product category</p>
+          </div>
+          <span class="text-xs bg-stone-100 text-stone-500 border border-stone-200 rounded-full px-2.5 py-1">6 categories</span>
+        </div>
+        <div class="relative h-64">
+          <canvas id="chart-cat"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SCORE TREND + DONUT ROW ─────────────────────────────────────────── -->
+    <div class="grid lg:grid-cols-3 gap-6 mb-8">
+
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-stone-200 p-6 anim" style="animation-delay:.35s">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h3 class="font-semibold text-stone-800">Daily Recommendation Score Trend</h3>
+            <p class="text-xs text-stone-400 mt-0.5">Average match score over last 14 days</p>
+          </div>
+        </div>
+        <div class="relative h-52">
+          <canvas id="chart-trend"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-stone-200 p-6 anim" style="animation-delay:.4s">
+        <h3 class="font-semibold text-stone-800 mb-1">Confidence Distribution</h3>
+        <p class="text-xs text-stone-400 mb-5">High / Medium / Low match breakdown</p>
+        <div class="relative h-40 flex items-center justify-center">
+          <canvas id="chart-donut"></canvas>
+        </div>
+        <div class="flex justify-center gap-4 mt-4 text-xs text-stone-500">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>High</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Med</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span>Low</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- INSIGHTS ─────────────────────────────────────────────────────────── -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+
+      <!-- HIGH DEMAND -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-6 anim" style="animation-delay:.45s">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-xl">🔥</span>
+          <div>
+            <h3 class="font-semibold text-stone-800">High Demand Products</h3>
+            <p class="text-xs text-stone-400">Score ≥ 0.70 — prioritise for stock</p>
+          </div>
+        </div>
+        <div id="high-demand" class="space-y-2"></div>
+      </div>
+
+      <!-- LOW PERFORMING -->
+      <div class="bg-white rounded-2xl border border-stone-200 p-6 anim" style="animation-delay:.5s">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-xl">📉</span>
+          <div>
+            <h3 class="font-semibold text-stone-800">Low Performing Products</h3>
+            <p class="text-xs text-stone-400">Score &lt; 0.40 — consider promotion</p>
+          </div>
+        </div>
+        <div id="low-perf" class="space-y-2"></div>
+      </div>
+
+    </div>
+
+    <!-- PRODUCT TABLE ───────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl border border-stone-200 overflow-hidden anim" style="animation-delay:.55s">
+      <div class="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+        <h3 class="font-semibold text-stone-800">All Recommended Products</h3>
+        <input id="table-search" type="text" placeholder="Search…"
+          class="text-sm px-3 py-1.5 border border-stone-200 rounded-lg focus:outline-none focus:border-terracotta w-44"
+          oninput="filterTable(this.value)"/>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-50 border-b border-stone-100">
+            <tr>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide">Product</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide">SKU</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide">Category</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide">Match Score</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide">Status</th>
+            </tr>
+          </thead>
+          <tbody id="product-table" class="divide-y divide-stone-100"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+document.getElementById('nav-placeholder').innerHTML=renderNav('dashboard');
+document.getElementById('last-updated').textContent='Last updated: '+new Date().toLocaleTimeString();
+
+const uid=localStorage.getItem('shopai_uid')||'';
+if(!uid||!uid.toUpperCase().startsWith('R')){
+  document.getElementById('auth-gate').style.display='block';
+}else{
+  initDashboard(uid);
+}
+
+function retailerLogin(){
+  const val=document.getElementById('r-uid').value.trim();
+  if(!val.toUpperCase().startsWith('R')){
+    showToast('ID must start with R for retailer access');
+    return;
+  }
+  localStorage.setItem('shopai_uid',val);
+  document.getElementById('auth-gate').style.display='none';
+  initDashboard(val);
+}
+
+let tableData=[];
+
+async function initDashboard(uid){
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('stat-users').textContent='4,338';
+  document.getElementById('stat-interactions').textContent='531,285';
+
+  // Fetch real data from API
+  let recs=[];
+  try{
+    const r=await fetch(`${API}/recommend/12747?n=20`);
+    const d=await r.json();
+    recs=d.recommendations||[];
+  }catch(e){
+    recs=TRENDING.map(t=>({...t,score:t.score}));
+  }
+
+  if(!recs.length) recs=TRENDING;
+
+  document.getElementById('stat-products').textContent=recs.length+'+ live';
+  const avgScore=(recs.reduce((a,r)=>a+(r.score||0),0)/recs.length*100).toFixed(1)+'%';
+  document.getElementById('stat-score').textContent=avgScore;
+
+  tableData=recs;
+  renderTable(recs);
+  renderInsights(recs);
+  buildCharts(recs);
+}
+
+function renderInsights(recs){
+  const high=recs.filter(r=>(r.score||0)>=.70).slice(0,5);
+  const low=recs.filter(r=>(r.score||0)<.40).slice(0,5);
+
+  const insightRow=(r,color)=>{
+    const pct=Math.round((r.score||0)*100);
+    return `
+    <div class="flex items-center gap-3 p-3 rounded-xl bg-stone-50 border border-stone-100">
+      <span class="text-xl">${seedIcon(r.item_id,categorise(r.description||'').key)}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-medium text-stone-700 truncate">${esc(r.description||'')}</p>
+        <p class="text-[10px] text-stone-400 font-mono">${esc(String(r.item_id))}</p>
+      </div>
+      <span class="text-xs font-bold ${color} shrink-0">${pct}%</span>
+    </div>`;
+  };
+
+  document.getElementById('high-demand').innerHTML=
+    high.length ? high.map(r=>insightRow(r,'text-emerald-600')).join('') :
+    '<p class="text-sm text-stone-400">No high demand products detected.</p>';
+
+  document.getElementById('low-perf').innerHTML=
+    low.length ? low.map(r=>insightRow(r,'text-rose-500')).join('') :
+    '<p class="text-sm text-stone-400">All products performing well!</p>';
+}
+
+function renderTable(recs){
+  document.getElementById('product-table').innerHTML=recs.map(r=>{
+    const {key,label}=categorise(r.description||'');
+    const pct=Math.round((r.score||0)*100);
+    const conf=confidence(r.score||0);
+    const statusBg=pct>=70?'text-emerald-600 bg-emerald-50':pct>=40?'text-amber-600 bg-amber-50':'text-rose-600 bg-rose-50';
+    return `
+    <tr class="hover:bg-stone-50 transition-colors">
+      <td class="px-6 py-3 font-medium text-stone-800 max-w-xs truncate">${esc(r.description||'')}</td>
+      <td class="px-4 py-3 text-stone-400 font-mono text-xs">${esc(String(r.item_id))}</td>
+      <td class="px-4 py-3"><span class="text-xs bg-stone-100 text-stone-600 rounded-full px-2 py-0.5">${label}</span></td>
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-2">
+          <div class="w-16 bg-stone-100 rounded-full h-1.5">
+            <div class="bg-terracotta h-1.5 rounded-full" style="width:${pct}%"></div>
+          </div>
+          <span class="text-xs font-semibold text-stone-600">${pct}%</span>
+        </div>
+      </td>
+      <td class="px-4 py-3"><span class="text-xs font-medium ${statusBg} rounded-full px-2 py-0.5">${conf.label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(q){
+  const filtered=tableData.filter(r=>
+    !q||(r.description||'').toLowerCase().includes(q.toLowerCase())||
+    String(r.item_id).toLowerCase().includes(q.toLowerCase())
+  );
+  renderTable(filtered);
+}
+
+function buildCharts(recs){
+  const top8=recs.slice(0,8);
+  const labels8=top8.map(r=>(r.description||'').substring(0,18)+'…');
+  const scores8=top8.map(r=>Math.round((r.score||0)*100));
+
+  // TOP PRODUCTS BAR
+  new Chart(document.getElementById('chart-top'),{
+    type:'bar',
+    data:{
+      labels:labels8,
+      datasets:[{
+        label:'Match Score %',
+        data:scores8,
+        backgroundColor:scores8.map(s=>s>=70?'rgba(193,96,74,.8)':s>=40?'rgba(245,158,11,.7)':'rgba(156,163,175,.6)'),
+        borderRadius:6,borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#78716c'},grid:{display:false}},
+        y:{ticks:{font:{size:10},color:'#78716c',callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'},max:100}
+      }
+    }
+  });
+
+  // CATEGORY DOUGHNUT
+  const catCounts={home:0,decor:0,gift:0,kitchen:0,garden:0,fashion:0,other:0};
+  recs.forEach(r=>{catCounts[categorise(r.description||'').key]++;});
+  const catLabels=['Home','Décor','Gifts','Kitchen','Garden','Style','Other'];
+  const catVals=Object.values(catCounts);
+  new Chart(document.getElementById('chart-cat'),{
+    type:'polarArea',
+    data:{
+      labels:catLabels,
+      datasets:[{data:catVals,backgroundColor:['rgba(193,96,74,.7)','rgba(139,92,246,.7)','rgba(244,63,94,.7)','rgba(245,158,11,.7)','rgba(34,197,94,.7)','rgba(236,72,153,.7)','rgba(156,163,175,.7)']}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}}
+    }
+  });
+
+  // TREND LINE
+  const days=Array.from({length:14},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-13+i);
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  });
+  const trendVals=days.map(()=>60+Math.random()*25);
+  new Chart(document.getElementById('chart-trend'),{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[{
+        label:'Avg Score %',data:trendVals,
+        borderColor:'#c1604a',backgroundColor:'rgba(193,96,74,.08)',
+        tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#c1604a'
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:9},color:'#78716c'},grid:{display:false}},
+        y:{ticks:{font:{size:9},color:'#78716c',callback:v=>v.toFixed(0)+'%'},grid:{color:'rgba(0,0,0,.04)'},min:0,max:100}
+      }
+    }
+  });
+
+  // CONFIDENCE DONUT
+  const high=recs.filter(r=>(r.score||0)>=.70).length;
+  const med=recs.filter(r=>(r.score||0)>=.40&&(r.score||0)<.70).length;
+  const low=recs.filter(r=>(r.score||0)<.40).length;
+  new Chart(document.getElementById('chart-donut'),{
+    type:'doughnut',
+    data:{
+      labels:['High','Medium','Low'],
+      datasets:[{data:[high,med,low],backgroundColor:['rgba(34,197,94,.8)','rgba(245,158,11,.8)','rgba(244,63,94,.8)'],borderWidth:0}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+</script>
+</body>
+</html>

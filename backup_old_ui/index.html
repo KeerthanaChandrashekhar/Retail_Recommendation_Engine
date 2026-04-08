@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>shopAI — Recommendations</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  --navy:       #0d1117;
+  --navy2:      #161b27;
+  --navy3:      #1e2535;
+  --navy4:      #252d3d;
+  --amber:      #f0a500;
+  --amber2:     #ffc840;
+  --amber-dim:  #f0a50022;
+  --slate:      #8892a4;
+  --slate2:     #b0bac8;
+  --white:      #eef2f8;
+  --green:      #22c97a;
+  --green-dim:  #22c97a18;
+  --red:        #ff5f6d;
+  --red-dim:    #ff5f6d18;
+  --blue:       #4f8ef7;
+  --blue-dim:   #4f8ef718;
+  --r:          14px;
+  --r2:         10px;
+  font-family: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--navy); color: var(--white); min-height: 100vh; }
+
+/* ── NAV ───────────────────────────────────────────────── */
+nav {
+  background: var(--navy2);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: 0 40px; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'DM Serif Display', serif; font-size: 20px; letter-spacing: -.3px;
+}
+.logo-dot {
+  width: 8px; height: 8px; background: var(--amber);
+  border-radius: 50%; box-shadow: 0 0 8px var(--amber);
+}
+.nav-pill {
+  font-size: 11px; background: var(--amber-dim); color: var(--amber);
+  border: 1px solid var(--amber); border-radius: 20px;
+  padding: 3px 10px; font-weight: 500; letter-spacing: .4px;
+}
+
+/* ── HERO ──────────────────────────────────────────────── */
+.hero {
+  padding: 56px 40px 44px;
+  background: radial-gradient(ellipse 60% 50% at 50% 0%,
+    rgba(240,165,0,.07) 0%, transparent 70%);
+  text-align: center; border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.hero-eyebrow {
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--amber); font-weight: 500; margin-bottom: 14px;
+}
+.hero h1 {
+  font-family: 'DM Serif Display', serif; font-size: 38px;
+  letter-spacing: -.5px; line-height: 1.15; margin-bottom: 10px;
+}
+.hero h1 em { font-style: normal; color: var(--amber); }
+.hero-sub {
+  font-size: 14px; color: var(--slate); margin-bottom: 32px; line-height: 1.6;
+}
+
+/* ── SEARCH PANEL ──────────────────────────────────────── */
+.search-panel {
+  max-width: 580px; margin: 0 auto;
+  background: var(--navy3); border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--r); padding: 22px;
+}
+.search-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.field-wrap { flex: 1; min-width: 140px; position: relative; }
+.field-wrap label {
+  display: block; font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--slate); margin-bottom: 6px; font-weight: 500;
+}
+.field-wrap input, .field-wrap select {
+  width: 100%; padding: 11px 14px;
+  background: var(--navy4); border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--r2); color: var(--white); font-size: 14px;
+  font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .2s;
+}
+.field-wrap input:focus, .field-wrap select:focus { border-color: var(--amber); }
+.field-wrap select option { background: var(--navy3); }
+.btn-go {
+  padding: 11px 28px; background: var(--amber); color: var(--navy);
+  border: none; border-radius: var(--r2); font-size: 14px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; align-self: flex-end;
+  font-family: 'DM Sans', sans-serif; transition: background .15s, transform .1s;
+}
+.btn-go:hover  { background: var(--amber2); }
+.btn-go:active { transform: scale(.97); }
+
+/* ── SAMPLE CHIPS ──────────────────────────────────────── */
+.sample-row {
+  margin-top: 14px; font-size: 12px; color: var(--slate);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+}
+.sample-chip {
+  padding: 4px 12px; background: var(--navy4);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
+  font-size: 11px; color: var(--slate2); cursor: pointer; transition: all .15s;
+}
+.sample-chip:hover { border-color: var(--amber); color: var(--amber); }
+
+/* ── RESULTS SECTION ───────────────────────────────────── */
+.results-wrap { max-width: 1200px; margin: 0 auto; padding: 36px 40px 80px; }
+.results-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.results-title { font-family: 'DM Serif Display', serif; font-size: 24px; }
+.results-meta  { display: flex; align-items: center; gap: 10px; }
+.count-badge {
+  font-size: 11px; background: var(--amber-dim); color: var(--amber);
+  border: 1px solid rgba(240,165,0,.3); border-radius: 20px;
+  padding: 3px 12px; font-weight: 500;
+}
+.sort-select {
+  padding: 7px 12px; background: var(--navy3);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 8px;
+  color: var(--slate2); font-size: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; outline: none;
+}
+
+/* ── GRID ──────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+/* ── CARD ──────────────────────────────────────────────── */
+.card {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--r); overflow: hidden;
+  transition: transform .2s, border-color .2s, box-shadow .2s;
+  animation: fadeUp .35s ease both;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(240,165,0,.35);
+  box-shadow: 0 12px 40px rgba(0,0,0,.4), 0 0 0 1px rgba(240,165,0,.1);
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* THUMBNAIL */
+.card-thumb {
+  height: 110px; display: flex; align-items: center; justify-content: center;
+  font-size: 40px; position: relative; overflow: hidden;
+}
+.card-thumb::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, var(--navy2));
+}
+.thumb-home    { background: linear-gradient(135deg, #1e2a3a, #253040); }
+.thumb-decor   { background: linear-gradient(135deg, #2a1e3a, #302540); }
+.thumb-gift    { background: linear-gradient(135deg, #3a2a1e, #403025); }
+.thumb-kitchen { background: linear-gradient(135deg, #1e3a2a, #254030); }
+.thumb-garden  { background: linear-gradient(135deg, #243a1e, #2e4025); }
+.thumb-fashion { background: linear-gradient(135deg, #3a1e2e, #402535); }
+.thumb-other   { background: linear-gradient(135deg, #1e293a, #252f40); }
+
+/* CONFIDENCE PILL */
+.conf-pill {
+  position: absolute; top: 10px; right: 10px; z-index: 1;
+  font-size: 9px; font-weight: 600; letter-spacing: .5px;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 20px;
+}
+.conf-high { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,201,122,.3); }
+.conf-med  { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(240,165,0,.3); }
+.conf-low  { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,95,109,.3); }
+
+/* CARD BODY */
+.card-body { padding: 14px 16px 16px; }
+
+.cat-tag {
+  display: inline-block; font-size: 9px; letter-spacing: .8px;
+  text-transform: uppercase; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px; margin-bottom: 8px;
+  background: var(--blue-dim); color: var(--blue);
+  border: 1px solid rgba(79,142,247,.2);
+}
+.card-name {
+  font-size: 13px; font-weight: 500; line-height: 1.45; margin-bottom: 10px;
+  color: var(--white); display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* SCORE BAR */
+.score-section  { margin-bottom: 10px; }
+.score-lbl-row  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.score-lbl      { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--slate); font-weight: 500; }
+.score-num      { font-size: 13px; font-weight: 600; color: var(--amber); }
+.score-track    { height: 3px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; }
+.score-fill     {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--amber), var(--amber2));
+  transition: width .5s .1s ease;
+}
+
+/* WHY LABEL */
+.why-row {
+  display: flex; align-items: flex-start; gap: 7px;
+  background: rgba(255,255,255,.03); border-radius: 8px;
+  padding: 8px 10px; border-left: 2px solid var(--amber); margin-bottom: 10px;
+}
+.why-icon { font-size: 11px; margin-top: 1px; flex-shrink: 0; color: var(--amber); }
+.why-text { font-size: 11px; color: var(--slate2); line-height: 1.4; }
+.item-id  { font-size: 10px; color: var(--slate); font-family: monospace; letter-spacing: .3px; }
+
+/* ── STATES ────────────────────────────────────────────── */
+.state-wrap { padding: 80px 20px; text-align: center; }
+.state-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+.state-title { font-size: 17px; font-weight: 500; margin-bottom: 8px; }
+.state-sub { font-size: 13px; color: var(--slate); line-height: 1.6; max-width: 340px; margin: 0 auto; }
+
+.spinner-ring {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(255,255,255,.08); border-top-color: var(--amber);
+  border-radius: 50%; animation: spin .75s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-box {
+  background: var(--red-dim); border: 1px solid rgba(255,95,109,.25);
+  border-radius: var(--r2); padding: 18px 20px;
+  display: flex; gap: 12px; align-items: flex-start;
+  max-width: 480px; margin: 0 auto; text-align: left;
+}
+.error-box .err-icon { font-size: 18px; flex-shrink: 0; }
+.error-box .err-title { font-size: 13px; font-weight: 600; color: var(--red); margin-bottom: 4px; }
+.error-box .err-body  { font-size: 12px; color: var(--slate2); line-height: 1.6; }
+.error-box code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 3px; }
+
+/* ── RESPONSIVE ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  nav, .hero, .results-wrap { padding-left: 20px; padding-right: 20px; }
+  .hero h1 { font-size: 26px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────── -->
+<nav>
+  <div class="logo"><span class="logo-dot"></span>shopAI</div>
+  <span class="nav-pill">AI PICKS</span>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────── -->
+<header class="hero">
+  <div class="hero-eyebrow">Personalised Picks</div>
+  <h1>Products Curated<br/><em>Just for You</em></h1>
+  <p class="hero-sub">
+    Our engine analyses purchase patterns across thousands of customers<br/>
+    to surface the products you're most likely to love.
+  </p>
+
+  <div class="search-panel">
+    <div class="search-row">
+      <div class="field-wrap">
+        <label>Customer ID</label>
+        <input id="uid" type="number" placeholder="e.g. 12747" autocomplete="off"/>
+      </div>
+      <div class="field-wrap" style="max-width:130px">
+        <label>Results</label>
+        <select id="nval">
+          <option value="5">5 picks</option>
+          <option value="10" selected>10 picks</option>
+          <option value="20">20 picks</option>
+        </select>
+      </div>
+      <div class="field-wrap" style="flex:none">
+        <label style="visibility:hidden">Go</label>
+        <button class="btn-go" onclick="loadRecs()">Recommend →</button>
+      </div>
+    </div>
+    <div class="sample-row" id="sample-row">
+      <span>Try a sample:</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── RESULTS ───────────────────────────────────────────── -->
+<main class="results-wrap">
+  <div class="results-header" id="results-header" style="display:none">
+    <h2 class="results-title">Top Picks for You</h2>
+    <div class="results-meta">
+      <span class="count-badge" id="count-badge"></span>
+      <select class="sort-select" id="sort-select" onchange="sortCards()">
+        <option value="score">Sort: Relevance</option>
+        <option value="name">Sort: Name A–Z</option>
+        <option value="conf">Sort: Confidence ↓</option>
+      </select>
+    </div>
+  </div>
+  <div id="output">
+    <div class="state-wrap">
+      <span class="state-icon">✦</span>
+      <div class="state-title">Your recommendations await</div>
+      <div class="state-sub">Enter a customer ID above to discover products tailored to your purchase history.</div>
+    </div>
+  </div>
+</main>
+
+<!-- ── JAVASCRIPT ────────────────────────────────────────── -->
+<script>
+const API_BASE = "http://127.0.0.1:5000";
+let currentRecs = [];
+
+// ── CATEGORY INTELLIGENCE ────────────────────────────────
+const CAT_PATTERNS = [
+  [/candle|lamp|light|holder|cushion|pillow|curtain|mirror|frame|clock|blind/i,  'home',    'Home'],
+  [/decor|ornament|vintage|retro|sign|vase|pot|urn|figurine|statue|plaque/i,     'decor',   'Décor'],
+  [/gift|card|wrap|ribbon|bag|box|set|pack|bundle|hamper/i,                      'gift',    'Gifts'],
+  [/mug|cup|tea|coffee|kitchen|tin|jar|bowl|plate|spoon|tray|jug|bottle/i,       'kitchen', 'Kitchen'],
+  [/garden|plant|flower|seed|herb|outdoor|trowel|watering/i,                     'garden',  'Garden'],
+  [/bag|purse|wallet|scarf|hat|jewel|bracelet|ring|soap|cream|perfume|lotion/i,  'fashion', 'Style'],
+];
+
+function getCategory(desc) {
+  for (const [re, key, label] of CAT_PATTERNS) {
+    if (re.test(desc)) return { key, label };
+  }
+  return { key: 'other', label: 'General' };
+}
+
+// ── ICONS PER CATEGORY ───────────────────────────────────
+const CAT_ICONS = {
+  home:    ['🕯️','🪞','🛋️','🖼️','🪴','🔆'],
+  decor:   ['🎨','🪩','🧶','🎀','🏮','🫙'],
+  gift:    ['🎁','🧸','✉️','🎊','🎀','🪄'],
+  kitchen: ['☕','🫖','🧺','🍶','🥄','🫙'],
+  garden:  ['🌸','🌿','🪻','🌱','🌼','🪴'],
+  fashion: ['🧴','👜','🧣','🪭','💍','🌹'],
+  other:   ['🛍️','🧩','📦','🌟','🏷️','💫'],
+};
+const seedIcon = (id, cat) => {
+  const arr = CAT_ICONS[cat] || CAT_ICONS.other;
+  const hash = String(id).split('').reduce((a,c) => a + c.charCodeAt(0), 0);
+  return arr[hash % arr.length];
+};
+
+// ── CONFIDENCE ───────────────────────────────────────────
+function getConf(score) {
+  if (score >= 0.70) return { label: 'High',   cls: 'conf-high' };
+  if (score >= 0.40) return { label: 'Medium', cls: 'conf-med'  };
+  return               { label: 'Low',    cls: 'conf-low'  };
+}
+
+// ── WHY LABELS (cycle by index) ──────────────────────────
+const WHY_LABELS = [
+  'Popular among similar customers',
+  'Frequently purchased together',
+  'High preference score',
+  'Trending in your segment',
+  'Matches your taste profile',
+  'Top pick for your purchase history',
+  'Based on customers like you',
+  'Pairs well with past orders',
+];
+
+// ── HELPERS ──────────────────────────────────────────────
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ── RENDER ONE CARD ──────────────────────────────────────
+function renderCard(rec, i) {
+  const { key, label } = getCategory(rec.description || '');
+  const conf  = getConf(rec.score || 0);
+  const icon  = seedIcon(rec.item_id, key);
+  const why   = WHY_LABELS[i % WHY_LABELS.length];
+  const pct   = Math.round((rec.score || 0) * 100);
+  const delay = (i * 0.04).toFixed(2);
+
+  return `
+  <div class="card" style="animation-delay:${delay}s"
+       data-score="${rec.score || 0}"
+       data-name="${esc(rec.description || '')}"
+       data-conf="${pct}">
+    <div class="card-thumb thumb-${key}">
+      ${icon}
+      <span class="conf-pill ${conf.cls}">${conf.label}</span>
+    </div>
+    <div class="card-body">
+      <span class="cat-tag">${label}</span>
+      <div class="card-name">${esc(rec.description || 'Unknown Product')}</div>
+      <div class="score-section">
+        <div class="score-lbl-row">
+          <span class="score-lbl">Relevance</span>
+          <span class="score-num">${pct}% match</span>
+        </div>
+        <div class="score-track">
+          <div class="score-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="why-row">
+        <span class="why-icon">✦</span>
+        <span class="why-text">${why}</span>
+      </div>
+      <div class="item-id">SKU: ${esc(String(rec.item_id || ''))}</div>
+    </div>
+  </div>`;
+}
+
+// ── SORT ─────────────────────────────────────────────────
+function sortCards() {
+  const val = document.getElementById('sort-select').value;
+  const sorted = [...currentRecs].sort((a, b) => {
+    if (val === 'name') return (a.description||'').localeCompare(b.description||'');
+    return (b.score||0) - (a.score||0);  // relevance & conf both sort by score
+  });
+  document.getElementById('output').innerHTML =
+    `<div class="grid">${sorted.map(renderCard).join('')}</div>`;
+}
+
+// ── MAIN LOADER ──────────────────────────────────────────
+async function loadRecs() {
+  const uid   = document.getElementById('uid').value.trim();
+  const n     = document.getElementById('nval').value;
+  const out   = document.getElementById('output');
+  const hdr   = document.getElementById('results-header');
+  const badge = document.getElementById('count-badge');
+
+  if (!uid) {
+    hdr.style.display = 'none';
+    out.innerHTML = `
+      <div class="state-wrap">
+        <div class="error-box">
+          <span class="err-icon">⚠</span>
+          <div>
+            <div class="err-title">Missing customer ID</div>
+            <div class="err-body">Please enter a valid customer ID to get recommendations.</div>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  hdr.style.display = 'none';
+  out.innerHTML = `
+    <div class="state-wrap">
+      <div class="spinner-ring"></div>
+      <div class="state-title">Analysing your profile…</div>
+      <div class="state-sub">Scanning purchase patterns for customer ${esc(uid)}</div>
+    </div>`;
+
+  try {
+    const res  = await fetch(`${API_BASE}/recommend/${uid}?n=${n}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      hdr.style.display = 'none';
+      out.innerHTML = `
+        <div class="state-wrap">
+          <div class="error-box">
+            <span class="err-icon">✕</span>
+            <div>
+              <div class="err-title">${esc(data.error || 'Error ' + res.status)}</div>
+              <div class="err-body">${
+                res.status === 404
+                  ? 'Customer not found in training data. Try one of the sample IDs above.'
+                  : 'Check the Flask console for more details.'
+              }</div>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    currentRecs = data.recommendations || [];
+
+    if (!currentRecs.length) {
+      hdr.style.display = 'none';
+      out.innerHTML = `
+        <div class="state-wrap">
+          <span class="state-icon">◎</span>
+          <div class="state-title">No recommendations found</div>
+          <div class="state-sub">
+            Customer ${esc(uid)} doesn't have enough purchase history
+            to generate personalised picks yet.
+          </div>
+        </div>`;
+      return;
+    }
+
+    badge.textContent = `${currentRecs.length} products`;
+    hdr.style.display = 'flex';
+    out.innerHTML = `<div class="grid">${currentRecs.map(renderCard).join('')}</div>`;
+
+  } catch (err) {
+    hdr.style.display = 'none';
+    out.innerHTML = `
+      <div class="state-wrap">
+        <div class="error-box">
+          <span class="err-icon">✕</span>
+          <div>
+            <div class="err-title">Cannot reach Flask API</div>
+            <div class="err-body">
+              Make sure <code>python app.py</code> is running on port 5000.
+              If opening this file directly, enable CORS in Flask
+              (<code>flask-cors</code>).
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+// ── LOAD SAMPLE IDs FROM /users ──────────────────────────
+(async () => {
+  try {
+    const res  = await fetch(`${API_BASE}/users`);
+    const data = await res.json();
+    const ids  = (data.sample_ids || []).slice(0, 6);
+    const row  = document.getElementById('sample-row');
+    if (ids.length) {
+      row.innerHTML = '<span>Try a sample:</span>' +
+        ids.map(id =>
+          `<span class="sample-chip"
+            onclick="document.getElementById('uid').value=${id};loadRecs()"
+          >${id}</span>`
+        ).join('');
+    }
+  } catch { /* Flask offline — skip */ }
+})();
+
+// ── ENTER KEY ────────────────────────────────────────────
+document.getElementById('uid')
+  .addEventListener('keydown', e => { if (e.key === 'Enter') loadRecs(); });
+</script>
+
+</body>
+</html>
