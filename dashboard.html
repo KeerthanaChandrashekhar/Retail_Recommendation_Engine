@@ -78,6 +78,50 @@ tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:[
       </div>
     </div>
 
+    </div>
+
+    <!-- ── SEND RECOMMENDATIONS PANEL ────────────────────────── -->
+    <div class="bg-white rounded-2xl border border-stone-200 p-6 mb-8 anim" style="animation-delay:.22s">
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+
+        <div class="flex-1">
+          <h3 class="font-semibold text-stone-800 mb-1">Push Recommendations via Email</h3>
+          <p class="text-xs text-stone-400 mb-3">
+            Send a personalised product recommendation email directly to a customer.
+          </p>
+
+          <label class="block text-xs uppercase tracking-widest text-stone-400 font-semibold mb-1.5">
+            Customer ID
+          </label>
+
+          <input
+            id="email-uid"
+            type="text"
+            placeholder="e.g. 12346, 12347…"
+            class="w-full sm:max-w-xs px-4 py-2.5 border border-stone-300 rounded-xl text-sm
+                  focus:outline-none focus:ring-2 focus:ring-terracotta/30 focus:border-terracotta transition-all"
+          />
+
+          <p class="text-xs text-stone-400 mt-1.5">
+            Mapped users: <span class="font-mono text-stone-600">12346 · 12347 · 12748 · 15311</span>
+          </p>
+        </div>
+
+        <button
+          onclick="sendRecommendations(document.getElementById('email-uid').value.trim())"
+          id="send-btn"
+          class="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white text-sm font-semibold
+                rounded-xl hover:bg-terracotta transition-colors shrink-0 self-end sm:self-auto"
+        >
+          <span id="send-btn-icon">📧</span>
+          <span id="send-btn-label">Send Recommendations</span>
+        </button>
+
+      </div>
+
+      <div id="email-result" class="mt-4 hidden"></div>
+    </div>
+
     <!-- CHARTS ROW ─────────────────────────────────────────────────────── -->
     <div class="grid lg:grid-cols-2 gap-6 mb-8">
 

@@ -220,3 +220,79 @@ function showToast(msg){
 }
 
 window.addEventListener('DOMContentLoaded',updateCartBadge);
+
+// ============================================================
+// EMAIL RECOMMENDATION FEATURE
+// ============================================================
+
+function sendRecommendations(userId) {
+  if (!userId) {
+    showEmailResult('error', 'Please enter a Customer ID.');
+    return;
+  }
+
+  const btn   = document.getElementById('send-btn');
+  const icon  = document.getElementById('send-btn-icon');
+  const label = document.getElementById('send-btn-label');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('opacity-70','cursor-not-allowed');
+    icon.textContent  = '⏳';
+    label.textContent = 'Sending…';
+  }
+
+  fetch(`${API}/send_recommendations/${encodeURIComponent(userId)}`)
+    .then(res => res.json())
+    .then(data => {
+
+      if (data.status) {
+        showEmailResult(
+          'success',
+          `✅ ${data.status} — sent to <strong>${data.sent_to}</strong> with ${data.num_products} product picks.`
+        );
+      } 
+      else {
+        showEmailResult('error', `⚠️ ${data.error || 'Unknown error'}`);
+      }
+
+    })
+    .catch(() => {
+      showEmailResult(
+        'error',
+        '⚠️ Could not reach Flask API. Make sure <code>python app.py</code> is running.'
+      );
+    })
+    .finally(() => {
+
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70','cursor-not-allowed');
+        icon.textContent  = '📧';
+        label.textContent = 'Send Recommendations';
+      }
+
+    });
+}
+
+function showEmailResult(type, html) {
+
+  const el = document.getElementById('email-result');
+
+  if (!el) {
+    alert(html.replace(/<[^>]+>/g,''));
+    return;
+  }
+
+  const styles = {
+    success:'bg-emerald-50 border border-emerald-200 text-emerald-800',
+    error:'bg-red-50 border border-red-200 text-red-700'
+  };
+
+  el.className = `mt-4 rounded-xl px-4 py-3 text-sm ${styles[type] || styles.error}`;
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.add('hidden'),6000);
+}
