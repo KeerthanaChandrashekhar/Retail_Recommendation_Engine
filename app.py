@@ -1,3 +1,4 @@
+print("APP STARTING...")
 from flask_cors import CORS
 from flask import Flask, jsonify, request, send_from_directory
 import pickle
@@ -148,6 +149,8 @@ def send_recommendations(user_id):
         })
     else:
         return jsonify({"error": err}), 500
+
+print("REACHED END OF FILE")    
 
 # ------------------------------------------------------------
 # RUN
