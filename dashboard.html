@@ -4,12 +4,35 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>shopAI — Retailer Dashboard</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- 🔐 ROLE CHECK (MOVE UP) -->
 <script>
-tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:['DM Sans','sans-serif'],display:['Playfair Display','serif']}}}}
+var uid = localStorage.getItem('shopai_uid') || '';
 </script>
+
+<!-- 🎨 Tailwind config -->
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: { terracotta:'#c1604a' },
+      fontFamily: {
+        sans:['DM Sans','sans-serif'],
+        display:['Playfair Display','serif']
+      }
+    }
+  }
+}
+</script>
+
+<!-- 🔤 Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<!-- 📊 Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <style>
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .anim{animation:fadeUp .4s ease both}
@@ -89,32 +112,16 @@ tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:[
           <p class="text-xs text-stone-400 mb-3">
             Send a personalised product recommendation email directly to a customer.
           </p>
-
-          <label class="block text-xs uppercase tracking-widest text-stone-400 font-semibold mb-1.5">
-            Customer ID
-          </label>
-
-          <input
-            id="email-uid"
-            type="text"
-            placeholder="e.g. 12346, 12347…"
-            class="w-full sm:max-w-xs px-4 py-2.5 border border-stone-300 rounded-xl text-sm
-                  focus:outline-none focus:ring-2 focus:ring-terracotta/30 focus:border-terracotta transition-all"
-          />
-
-          <p class="text-xs text-stone-400 mt-1.5">
-            Mapped users: <span class="font-mono text-stone-600">12346 · 12347 · 12748 · 15311</span>
-          </p>
         </div>
 
         <button
-          onclick="sendRecommendations(document.getElementById('email-uid').value.trim())"
+          onclick="sendAllRecommendations()"
           id="send-btn"
           class="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white text-sm font-semibold
                 rounded-xl hover:bg-terracotta transition-colors shrink-0 self-end sm:self-auto"
         >
           <span id="send-btn-icon">📧</span>
-          <span id="send-btn-label">Send Recommendations</span>
+          <span id="send-btn-label">Send to All Customers</span>
         </button>
 
       </div>
@@ -246,7 +253,6 @@ tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:[
 document.getElementById('nav-placeholder').innerHTML=renderNav('dashboard');
 document.getElementById('last-updated').textContent='Last updated: '+new Date().toLocaleTimeString();
 
-const uid=localStorage.getItem('shopai_uid')||'';
 if(!uid||!uid.toUpperCase().startsWith('R')){
   document.getElementById('auth-gate').style.display='block';
 }else{
@@ -274,7 +280,7 @@ async function initDashboard(uid){
   // Fetch real data from API
   let recs=[];
   try{
-    const r=await fetch(`${API}/recommend/12747?n=20`);
+    const r = await fetch(`${API}/recommend/${uid}?n=20`);
     const d=await r.json();
     recs=d.recommendations||[];
   }catch(e){
@@ -298,7 +304,7 @@ function renderInsights(recs){
   const low=recs.filter(r=>(r.score||0)<.40).slice(0,5);
 
   const insightRow=(r,color)=>{
-    const pct=Math.round((r.score||0)*100);
+    const pct = Math.max(5, Math.round((r.score || 0) * 100));
     return `
     <div class="flex items-center gap-3 p-3 rounded-xl bg-stone-50 border border-stone-100">
       <span class="text-xl">${seedIcon(r.item_id,categorise(r.description||'').key)}</span>
@@ -322,7 +328,7 @@ function renderInsights(recs){
 function renderTable(recs){
   document.getElementById('product-table').innerHTML=recs.map(r=>{
     const {key,label}=categorise(r.description||'');
-    const pct=Math.round((r.score||0)*100);
+    const pct=Math.max(5, Math.round((r.score||0)*100));
     const conf=confidence(r.score||0);
     const statusBg=pct>=70?'text-emerald-600 bg-emerald-50':pct>=40?'text-amber-600 bg-amber-50':'text-rose-600 bg-rose-50';
     return `

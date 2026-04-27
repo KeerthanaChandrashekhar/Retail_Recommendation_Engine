@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>shopAI — Welcome</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:     #0d1117;
+      --navy2:    #161b27;
+      --navy3:    #1e2535;
+      --navy4:    #252d3d;
+      --amber:    #f0a500;
+      --amber2:   #ffc840;
+      --amber-dim:#f0a50022;
+      --slate:    #8892a4;
+      --slate2:   #b0bac8;
+      --white:    #eef2f8;
+      --green:    #22c97a;
+      --green-dim:#22c97a18;
+      --blue:     #4f8ef7;
+      --blue-dim: #4f8ef718;
+      font-family: 'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #f5f5f4; /* same as dashboard */
+      color: #1c1917;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid #e7e5e4;
+      padding: 0 40px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'DM Serif Display', serif; font-size: 20px; letter-spacing: -.3px;
+      color: #1c1917;
+    }
+    .logo-dot {
+      width: 8px; height: 8px; background: var(--amber);
+      border-radius: 50%; box-shadow: 0 0 8px var(--amber);
+    }
+    .nav-pill {
+      font-size: 11px; background: #fef3c7; color: #b45309;
+      border: none; border-radius: 20px;
+      padding: 3px 10px; font-weight: 500; letter-spacing: .4px;
+    }
+
+    /* ── MAIN ── */
+    .page-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+    }
+
+    .eyebrow {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--amber); font-weight: 500; margin-bottom: 14px;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 40px; letter-spacing: -.5px; line-height: 1.15;
+      text-align: center; margin-bottom: 12px;
+    }
+    h1 em { font-style: normal; color: var(--amber); }
+
+    .sub {
+      font-size: 14px; color: #78716c; text-align: center;
+      line-height: 1.6; max-width: 380px; margin-bottom: 48px;
+    }
+
+    /* ── ROLE CARDS ── */
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .role-card {
+      background: #ffffff;
+      border: 1px solid #e7e5e4;
+      border-radius: 14px;
+      padding: 32px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #1c1917;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+    .role-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 48px rgba(0,0,0,.45), 0 0 0 1px rgba(240,165,0,.15);
+    }
+
+    .role-card.customer:hover { border-color: rgba(240,165,0,.5); }
+    .role-card.retailer:hover { border-color: rgba(79,142,247,.5); }
+
+    .role-icon {
+      width: 60px; height: 60px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .customer .role-icon { background: var(--amber-dim); }
+    .retailer .role-icon { background: var(--blue-dim); }
+
+    .role-label {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px; letter-spacing: -.2px;
+    }
+
+    .role-desc {
+      font-size: 12px; color: #78716c; text-align: center; line-height: 1.5;
+    }
+
+    .role-btn {
+      margin-top: 4px;
+      display: inline-block;
+      font-size: 12px; font-weight: 600;
+      padding: 8px 20px; border-radius: 8px;
+      border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background .15s, transform .1s;
+    }
+    .role-btn:active { transform: scale(.96); }
+    .customer .role-btn {
+      background: #c1604a;
+      color: white;
+    }
+    .customer .role-btn:hover { background: var(--amber2); }
+
+    .retailer .role-btn {
+      background: #1c1917;
+      color: white;
+    }
+    .retailer .role-btn:hover { background: #6fa4ff; }
+    /* ── FOOTER NOTE ── */
+    .foot-note {
+      margin-top: 40px;
+      font-size: 11px; color: #78716c;
+      text-align: center; letter-spacing: .3px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 520px) {
+      .role-grid { grid-template-columns: 1fr; max-width: 300px; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo"><span class="logo-dot"></span>shopAI</div>
+    <span class="nav-pill">WELCOME</span>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="page-center">
+    <div class="eyebrow">Role Selection</div>
+    <h1>Who are you <em>today?</em></h1>
+    <p class="sub">Choose your role to access the right experience — personalised picks for shoppers, analytics for retailers.</p>
+
+    <div class="role-grid">
+
+      <!-- Customer -->
+      <a class="role-card customer" href="index.html">
+        <div class="role-icon">🛍️</div>
+        <div class="role-label">Customer</div>
+        <div class="role-desc">Discover AI-curated product recommendations tailored to your taste.</div>
+        <span class="role-btn">I'm a Customer</span>
+      </a>
+
+      <!-- Retailer -->
+      <a class="role-card retailer" href="dashboard.html">
+        <div class="role-icon">📊</div>
+        <div class="role-label">Retailer</div>
+        <div class="role-desc">Manage your store, send campaigns, and monitor recommendation activity.</div>
+        <span class="role-btn">I'm a Retailer</span>
+      </a>
+
+    </div>
+
+    <p class="foot-note">Powered by shopAI Recommendation Engine</p>
+  </div>
+
+  <script>
+  function setRole(role){
+    const uid = prompt("Enter ID (e.g., 12346 or R002):");
+
+    if(!uid){
+      alert("Please enter a valid ID");
+      return false;
+    }
+
+    localStorage.setItem('shopai_uid', uid);
+  }
+  </script>
+
+</body>
+</html>

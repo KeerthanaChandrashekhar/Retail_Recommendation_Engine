@@ -5,10 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>shopAI — Home</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script>
+var uid = localStorage.getItem('shopai_uid') || '';
+</script>
+
 <script>
 tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:['DM Sans','sans-serif'],display:['Playfair Display','serif']}}}}
 </script>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
 <style>
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -38,6 +44,7 @@ tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:[
           class="px-6 py-3 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-terracotta transition-colors">
           Get My Picks →
         </button>
+
       </div>
       <div id="sample-strip" class="mt-3 flex flex-wrap items-center gap-2 text-xs text-stone-400">
         <span>Sample IDs:</span>
@@ -154,7 +161,6 @@ tailwind.config={theme:{extend:{colors:{terracotta:'#c1604a'},fontFamily:{sans:[
 <script src="script.js"></script>
 <script>
 let allRecs=[];
-const uid=localStorage.getItem('shopai_uid')||'';
 
 document.getElementById('nav-placeholder').innerHTML=renderNav('home');
 
@@ -200,7 +206,7 @@ async function loadRecs(uid){
   const n=12;
   setState('loading');
   try{
-    const r=await fetch(`${API}/recommend/${uid}?n=${n}`);
+    const r=await fetch(`${API}/recommend/${uid}`);
     const d=await r.json();
     if(!r.ok){
       setState('error');

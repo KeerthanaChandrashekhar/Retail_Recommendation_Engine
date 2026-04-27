@@ -93,12 +93,13 @@ const TRENDING = [
 // ── SHARED NAV RENDERER ───────────────────────────────────────────────────────
 
 function renderNav(activePage){
-  const isRetailer=authRoute();
-  const uid=localStorage.getItem('shopai_uid')||'';
-  const links=[
-    {href:'index.html',label:'Home',id:'home'},
-    {href:'dashboard.html',label:'Dashboard',id:'dashboard'},
-  ];
+  const uid = localStorage.getItem('shopai_uid') || '';
+  const isRetailer = uid.toUpperCase().startsWith('R');
+
+  const links = isRetailer
+    ? [{href:'dashboard.html',label:'Dashboard',id:'dashboard'}]
+    : [{href:'index.html',label:'Home',id:'home'}];
+
   return `
   <nav class="sticky top-0 z-50 bg-white border-b border-stone-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
@@ -295,4 +296,13 @@ function showEmailResult(type, html) {
 
   clearTimeout(el._hideTimer);
   el._hideTimer = setTimeout(() => el.classList.add('hidden'),6000);
+}
+
+function sendAllRecommendations() {
+  fetch("http://127.0.0.1:5000/send_recommendations_all")
+    .then(res => res.json())
+    .then(data => {
+      alert("Emails sent to " + data.total + " users");
+    })
+    .catch(() => alert("Error sending emails"));
 }

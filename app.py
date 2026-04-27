@@ -1,4 +1,3 @@
-print("APP STARTING...")
 from flask_cors import CORS
 from flask import Flask, jsonify, request, send_from_directory
 import pickle
@@ -7,7 +6,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 # Load model
@@ -76,10 +75,7 @@ def send_email(to_email, subject, body):
 # ------------------------------------------------------------
 @app.route("/")
 def home():
-    return jsonify({
-        "message": "Retail Recommendation API running",
-        "use": "/recommend/<user_id>"
-    })
+    return send_from_directory(".", "login.html")
 
 # ------------------------------------------------------------
 # SERVE UI
@@ -87,6 +83,20 @@ def home():
 @app.route("/ui")
 def serve_ui():
     return send_from_directory(".", "index.html")
+
+@app.route("/index.html")
+def serve_index():
+    return send_from_directory(".", "index.html")
+
+
+@app.route("/dashboard.html")
+def serve_dashboard():
+    return send_from_directory(".", "dashboard.html")
+
+
+@app.route("/product.html")
+def serve_product():
+    return send_from_directory(".", "product.html")
 
 # ------------------------------------------------------------
 # RECOMMEND API
@@ -149,8 +159,49 @@ def send_recommendations(user_id):
         })
     else:
         return jsonify({"error": err}), 500
+    
+ 
+@app.route("/send_recommendations_all")
+def send_recommendations_all():
+    results = []
 
-print("REACHED END OF FILE")    
+    for user_id_str, email in user_email_map.items():
+        try:
+            user_id = int(user_id_str)
+
+            recs = recommend_products(user_id, top_n=10)
+
+            if recs is None:
+                continue
+
+            if hasattr(recs, "head"):
+                products = recs.head(5).to_dict(orient="records")
+            else:
+                products = recs[:5]
+
+            body = format_message(products)
+
+            success, err = send_email(email, "Recommended for You", body)
+
+            results.append({
+                "user": user_id,
+                "status": "sent" if success else "failed"
+            })
+
+        except Exception as e:
+            results.append({
+                "user": user_id,
+                "status": "error"
+            })
+
+    return {
+        "status": "done",
+        "total": len(results)
+    }
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('.', filename)
 
 # ------------------------------------------------------------
 # RUN
