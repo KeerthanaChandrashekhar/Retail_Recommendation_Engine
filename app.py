@@ -5,6 +5,7 @@ from recommend import recommend_products
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import pandas as pd
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -21,12 +22,13 @@ user_item_matrix = data["user_item_matrix"]
 SENDER_EMAIL = "keerthana2043@gmail.com"
 APP_PASSWORD = "dzam hrjh rfeb okku"
 
-user_email_map = {
-    "12346": "keerthana2043@gmail.com",
-    "12347": "friend@email.com",
-    "12748": "friend2@email.com",
-    "15311": "friend3@email.com",
-}
+users_df = pd.read_csv("users.csv")
+
+# Create mapping
+user_email_map = dict(zip(
+    users_df["user_id"].astype(str),
+    users_df["email"]
+))
 
 
 def format_message(products):
@@ -133,7 +135,7 @@ def get_users():
 @app.route("/send_recommendations/<int:user_id>")
 def send_recommendations(user_id):
 
-    email = user_email_map.get(str(user_id))
+    email = user_email_map.get(str(user_id), "default@gmail.com")
     if not email:
         return jsonify({"error": "No email found"}), 404
 
